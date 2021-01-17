@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
 
-const postsRoutes = require('./routes/posts.routes');
+const postsRoutes = require('../routes/posts.routes');
 
 const app = express();
 
@@ -27,15 +27,18 @@ app.use('*', (req, res) => {
 });
 
 /* MONGOOSE */
-mongoose.connect('mongodb://localhost:27017/bulletinBoard', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost:27017/bulletin-board', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 const db = mongoose.connection;
 db.once('open', () => {
   console.log('Successfully connected to the database');
 });
-db.on('error', err => console.log('Error: ' + err));
+db.on('error', (err) => console.log('Error: ' + err));
 
 /* START SERVER */
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
-  console.log('Server is running on port: '+port);
+  console.log('Server is running on port: ' + port);
 });

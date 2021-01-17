@@ -1,132 +1,187 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import { createPostDate } from '../../../utils/formatDate';
-
-import clsx from 'clsx';
-
-import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
-import InputAdornment from '@material-ui/core/InputAdornment';
+import Container from '@material-ui/core/Container';
 import Button from '@material-ui/core/Button';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
+import Typography from '@material-ui/core/Typography';
+import PhotoCamera from '@material-ui/icons/PhotoCamera';
+import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 
 import { connect } from 'react-redux';
-import { getPostById, updatePost } from '../../../redux/postsRedux.js';
-
+import { getPostById, updatePostRequest } from '../../../redux/postsRedux';
+import { getUser } from '../../../redux/usersRedux.js';
+import { withRouter } from 'react-router-dom';
 import styles from './PostEdit.module.scss';
 
 class Component extends React.Component {
   state = {
-    postData: { ...this.props.post },
-  }
+    postData: {
+      id: this.props.post._id,
+      title: this.props.post.title,
+      description: this.props.post.description,
+      email: this.props.post.email,
+      image: this.props.post.image,
+      phone: this.props.post.phone,
+      location: this.props.post.location,
+    },
+    isError: false,
+  };
 
-  handleChange = ( { target } ) => {
+  static propTypes = {
+    className: PropTypes.string,
+    post: PropTypes.object,
+    user: PropTypes.object,
+    updatePost: PropTypes.func,
+    history: PropTypes.object,
+  };
+
+  updateInputValue = ({ target }) => {
     const { postData } = this.state;
-    const { value, id } = target;
-    this.setState( { postData: { ...postData, [ id ]: value } } );
-  }
+    const { value, name } = target;
 
-  handleStatusChange = ( e ) => {
+    this.setState({ postData: { ...postData, [name]: value } });
+  };
+
+  setImage = ({ target }) => {
     const { postData } = this.state;
-    const { value } = e.target;
-    this.setState( {
-      postData: {
-        ...postData,
-        status: value,
-      },
-    } );
-  }
+    const files = target.files;
 
-  handleUpdateDateChange = () => {
-    const { postData } = this.state;
-    const date = createPostDate();
-    this.setState( {
-      postData: {
-        ...postData,
-        updated: date,
-      },
-    } );
-  }
+    if (files) this.setState({ postData: { ...postData, image: files[0] } });
+  };
 
-  submitForm = ( e ) => {
+  submitPost = async (e) => {
     const { postData } = this.state;
     const { updatePost } = this.props;
+
     e.preventDefault();
 
-    let error = null;
-
-    if ( !postData.title.length || !postData.text.length || !postData.email.length ) error = `You can't leave title, text or email fields empty`;
-    else if ( postData.title.length < 10 || postData.text.length < 20 ) error = `Title can't be shorter than 10 characters or text than 20 characters`;
-    if ( !error ) {
-      updatePost( postData );
-      alert( 'Post saved successfully' );
-    } else {
-      alert( error );
-    }
-  }
-
-  render () {
-    const { className, post } = this.props;
+    if (postData.title && postData.description && postData.email) {
+      const formData = new FormData();
+      for (let key of ['email', 'title', 'description', 'location', 'phone']) {
+        formData.append(key, postData[key]);
+      }
+      formData.append('image', postData.image);
+      updatePost(postData.id, formData);
+      this.props.history.push(`/post/${postData.id}`);
+    } else this.setState({ isError: true });
+  };
+  render() {
+    const { updateInputValue, submitPost, setImage } = this;
     const { postData } = this.state;
-    const { submitForm, handleChange, handleStatusChange, handleUpdateDateChange } = this;
+    const { post } = this.props;
+
     return (
-      <Paper className={ clsx( className, styles.root ) }>
-        <h2>Edit your post</h2>
-        {post ? (
-          <form className={ clsx( className, styles.form ) } onSubmit={ submitForm }>
-            <TextField className={ styles.title } id='title' label='Title' variant='outlined' InputProps={ { minLength: 10 } } required fullWidth onChange={ handleChange } value={ postData.title } />
-            <TextField className={ styles.text } id='text' label='text' variant='outlined' InputProps={ { minLength: 20 } } required fullWidth onChange={ handleChange } value={ postData.text } />
-            <TextField className={ styles.price } id='price' label='Price' variant='outlined' type='number' InputProps={ {
-              startAdornment: <InputAdornment position='start'>$</InputAdornment>,
-            } } defaultValue='0' onChange={ handleChange } value={ postData.price } />
-            <TextField className={ styles.phone } id='phone' label='Phone' variant='outlined' onChange={ handleChange } value={ postData.phone } />
-            <TextField className={ styles.location } id='location' label='Location' variant='outlined' onChange={ handleChange } value={ postData.location } />
-            <TextField className={ styles.mail } id='email' label='E-mail' variant='outlined' required fullWidth onChange={ handleChange } value={ postData.email } />
-            <Select labelId="status" id="status" value={ postData.status } onChange={ handleStatusChange } label="Status">
-              <MenuItem value='published'>Published</MenuItem>
-              <MenuItem value='closed'>Closed</MenuItem>
-            </Select>
-            <Button className={ styles.submit }
-              type="submit"
-              fullWidth
-              variant="contained"
+      <Container className={styles.root}>
+        <Typography
+          className={styles.title}
+          variant="h5"
+          color="textSecondary"
+          component="h2"
+        >
+          Post edit
+        </Typography>
+        <form
+          onSubmit={submitPost}
+          className={styles.form}
+          noValidate
+          autoComplete="off"
+        >
+          <div className={styles.formBox}>
+            <TextField
+              className={styles.formBox}
+              id="outlined-textarea"
+              label="Title"
+              placeholder="Notice title"
+              multiline
+              variant="outlined"
+              value={postData.title}
+              onChange={updateInputValue}
+            />
+          </div>
+          <div className={styles.formBox}>
+            <TextField
+              className={styles.formBox}
+              id="outlined-textarea"
+              label="Description"
+              placeholder="Description"
+              rows={4}
+              multiline
+              variant="outlined"
+              value={postData.description}
+              onChange={updateInputValue}
+            />
+          </div>
+          <div className={styles.formBox}>
+            <TextField
+              className={styles.formBox}
+              id="outlined-textarea"
+              label="Status"
+              placeholder="Status"
+              rows={1}
+              multiline
+              variant="outlined"
+              value={post.status}
+            />
+          </div>
+          <input
+            accept="image/*"
+            className={styles.input}
+            id="contained-button-file"
+            type="file"
+          />
+          <label
+            htmlFor="contained-button-file"
+            className={styles.label}
+            label="upload image"
+            onChange={setImage}
+          >
+            <Button
               color="primary"
-              onClick={ handleUpdateDateChange }>
-              Save your changes
-            </Button>
-            <Button className={ styles.submit }
+              className={styles.button}
+              aria-label="upload picture"
               variant="contained"
-              color="primary"
-              component={ Link } exact to={ `/post/${ post.id }` } >See edited post
+              startIcon={<PhotoCamera />}
+              component="span"
+              size="large"
+            >
+              Upload image
             </Button>
-          </form>
-        ) : ( <p>Sorry, there is no post. Go to  <Button className={ styles.button } variant="contained" color="primary" component={ Link } to={ '/' }>
-          Homepage</Button> </p> ) }
-      </Paper>
+          </label>
+          <Button
+            type="submit"
+            className={styles.button}
+            variant="contained"
+            color="secondary"
+            startIcon={<TrendingUpIcon />}
+            size="large"
+          >
+            Update Post
+          </Button>
+        </form>
+      </Container>
     );
   }
 }
-
 Component.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
-  post: PropTypes.object,
-  updatePost: PropTypes.func,
 };
 
-const mapStateToProps = ( state, props ) => ( {
-  post: getPostById( state, props.match.params.id ),
-} );
+const mapStateToProps = (state, props) => ({
+  post: getPostById(state, props.match.params.id),
+  user: getUser(state),
+});
 
-const mapDispatchToProps = dispatch => ( {
-  updatePost: ( data ) => dispatch( updatePost( data ) ),
-} );
+const mapDispatchToProps = (dispatch) => ({
+  updatePost: (id, data) => dispatch(updatePostRequest(id, data)),
+});
 
-const Container = connect( mapStateToProps, mapDispatchToProps )( Component );
+const ContainerComponent = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withRouter(Component));
 
 export {
-  Container as PostEdit,
+  ContainerComponent as PostEdit,
   Component as PostEditComponent,
 };

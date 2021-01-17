@@ -4,12 +4,14 @@ import TextField from '@material-ui/core/TextField';
 import Container from '@material-ui/core/Container';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
-import PhotoCamera from '@material-ui/icons/PhotoCamera';
 import SaveIcon from '@material-ui/icons/Save';
+import PhotoCamera from '@material-ui/icons/PhotoCamera';
+import { NotFound } from '../../views/NotFound/NotFound';
 import { connect } from 'react-redux';
 import { addPostRequest } from '../../../redux/postsRedux';
 import { getUser } from '../../../redux/usersRedux.js';
 import styles from './PostAdd.module.scss';
+import clsx from 'clsx';
 import { withRouter } from 'react-router-dom';
 
 class Component extends React.Component {
@@ -19,8 +21,9 @@ class Component extends React.Component {
       title: '',
       description: '',
       image: null,
+      email: '',
     },
-    error: null};
+    isError: false};
   }
 
   static propTypes = {
@@ -44,84 +47,114 @@ class Component extends React.Component {
 
   submitPost = async (e) => {
     const { post } = this.state;
-    const { addPost } = this.props;
+    const { addPost, user } = this.props;
 
     e.preventDefault();
-    if( post.title && post.description && post.image) {
-      await addPost(post);
-      this.setState({ post: {
-        title: '',
-        description: '',
-        image: null,
-      },
-      error:null});
+    if( post.title && post.description && post.image && post.email) {
+      const formData = new FormData();
+      
+      for (let key of ['email', 'description', 'title', 'location', 'phone']) {
+        formData.append(key, post[key]);
+      }
+
+      formData.append('image', post.image);
+      formData.append('user', user._id);
+
+      addPost(formData);
+      this.props.history.push('/my-posts');
     } else this.setState({isError: true});
   };
 
 
   render() {
+    const { handleChange, setImage, submitPost } = this;
+    const { user, className } = this.props;
 
     return (
-      <Container className={styles.root}>
-        <Typography className={styles.title} variant="h5" color="textSecondary" component="h2">
+      user.authenticated ? (
+        <Container className={clsx(className, styles.root)}>
+          <Typography className={styles.title} variant="h5" color="textSecondary" component="h2">
         Add new post
-        </Typography>
-        <form className={styles.form} noValidate autoComplete="off" onSubmit={this.submitPost}>
-          <div className={styles.formBox}>
-            <TextField
-              className={styles.formBox}
-              id="outlined-textarea"
-              label="Notice title"
-              placeholder="Notice title"
-              multiline
-              variant="outlined"
-              onChange={this.handleChange}
-            />
-          </div>
-        </form>
-        <form className={styles.form} noValidate autoComplete="off">
-          <div className={styles.formBox}>
-            <TextField
-              className={styles.formBox}
-              id="outlined-textarea"
-              label="Description"
-              placeholder="Description"
-              rows={4}
-              multiline
-              variant="outlined"
-              onChange={this.handleChange}
-            />
-          </div>
-        </form>
-        <form className={styles.buttons} noValidate autoComplete="off">
-          <input accept="image/*" className={styles.input} id="contained-button-file" type="file" />
-          <label 
-            htmlFor="contained-button-file"
-            className={styles.label}
-            label="upload image"
-            onChange={this.setImage}
-          >
-            <Button 
-              color="primary" 
-              aria-label="upload picture" 
-              variant="contained"
-              startIcon={<PhotoCamera />}
-              component="span"
-              size="large">
+          </Typography>
+          <form className={styles.form} noValidate autoComplete="off" onSubmit={submitPost}>
+            <div className={styles.formBox}>
+              <TextField
+                className={styles.formBox}
+                id="outlined-textarea"
+                label="Notice title"
+                placeholder="Notice title"
+                multiline
+                variant="outlined"
+                onChange={handleChange}
+              />
+            </div>
+            <div className={styles.formBox}>
+              <TextField
+                className={styles.formBox}
+                id="outlined-textarea"
+                label="location"
+                placeholder="location"
+                multiline
+                variant="outlined"
+                onChange={handleChange}
+              />
+            </div>
+            <div className={styles.formBox}>
+              <TextField
+                className={styles.formBox}
+                id="outlined-textarea"
+                label="e-mail"
+                placeholder="e-mail"
+                multiline
+                variant="outlined"
+                onChange={handleChange}
+              />
+            </div>
+            <div className={styles.formBox}>
+              <TextField
+                className={styles.formBox}
+                id="outlined-textarea"
+                label="Description"
+                placeholder="Description"
+                rows={4}
+                multiline
+                variant="outlined"
+                onChange={handleChange}
+              />
+            </div>
+            <input accept="image/*" className={styles.input} id="contained-button-file" type="file" />
+            <label 
+              htmlFor="contained-button-file"
+              className={styles.label}
+              label="upload image"
+              onChange={setImage}
+            >
+              <Button 
+                color="primary" 
+                className={styles.button}
+                aria-label="upload picture" 
+                variant="contained"
+                startIcon={<PhotoCamera />}
+                component="span">
               Upload image
-            </Button>
-          </label>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<SaveIcon />}
-            size="large"
-          >
+              </Button>
+            </label>
+            <Button
+              variant="contained"
+              className={styles.button}
+              color="secondary"
+              startIcon={<SaveIcon />}
+              type="submit"
+            >
         Save
-          </Button>
-        </form>
-      
-      </Container>
+            </Button>
+          </form>
+
+        </Container>
+      ) :
+        (
+          <NotFound />
+        )
     );
   }
 }
@@ -141,7 +174,6 @@ const mapDispatchToProps = dispatch => ({
 const ContainerComponent = connect(mapStateToProps, mapDispatchToProps)(withRouter(Component));
 
 export {
-  //Component as PostAdd,
   ContainerComponent as PostAdd,
   Component as PostAddComponent,
 };

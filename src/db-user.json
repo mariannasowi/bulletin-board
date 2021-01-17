@@ -1,0 +1,22 @@
+[{
+  "_id": {
+    "$oid": "38264823jbrewe"
+  },
+  "email": "robertjonson@mail.com",
+  "authenticated": true,
+  "state": "user"
+},{
+  "_id": {
+    "$oid": "83273872842mhe"
+  },
+  "email": "annagit@mail.com",
+  "authenticated": true,
+  "state": "user"
+},{
+  "_id": {
+    "$oid": "628292633nmk23"
+  },
+  "email": "katepiee@mail.com",
+  "authenticated": true,
+  "state": "user"
+}]
