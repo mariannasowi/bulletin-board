@@ -1,4 +1,26 @@
 @import '../../../styles/settings.scss';
 
-// .root {
-// }
+.root {
+  padding: $base-size;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.title,
+.text,
+.submit,
+.mail {
+  margin: 15px auto;
+}
+
+.price,
+.phone,
+.location,
+.submit {
+  width: 30%;
+}
